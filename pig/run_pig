@@ -1,0 +1,122 @@
+#!/bin/bash
+
+threads=0
+run_for=99
+pig_opt=""
+suffix=""
+points=8
+tuned_setting="none"
+iteration=0
+cpus=""
+numb_cpus=""
+
+usage()
+{
+	echo "Usage:"
+	echo "  -i x: Perform x iterations of the test, default is 1"
+	echo "  -P x: Divide cpus into x groups, default is 8"
+	echo "  -p x: Run pig with the options x"
+	echo "  -R x: Run for x seconds"
+	echo "  -r: Regression run, setting is time for 120 seconds, 8 cpu groups."
+	echo "  -s x: x Add the suffix x to the results file"
+	echo "  -t x: Running with tuned x" 
+}
+
+while getopts "P:i:t:p:s:r" o; do
+        case "${o}" in
+                i)
+                        iterations=${OPTARG}
+                ;;
+		P)
+			points=${OPTARG}
+		;;
+		p)
+			pig_opt="${OPTARG}"
+		;;
+		R)
+			run_for=${OPTARG}
+		;;
+		r)
+			run_for=120
+			points=8
+		;;
+		s)
+			suffix=".${OPTARG}"
+		;;
+                t)
+                        tuned_setting=${OPTARG}
+		;;
+        esac
+done
+shift $((OPTIND-1))
+
+obtain_system_information()
+{
+	cpus=`ls -d /sys/devices/system/cpu/cpu* | wc -l`
+	numb_cpus=`echo $cpus - 2 | bc`
+
+	RESULTSDIR=results_pig_${tuned_setting}_$(date "+%Y.%m.%d-%H.%M.%S")
+	rm results_pig_${tuned_setting}
+	mkdir ${RESULTSDIR}
+	ln -s ${RESULTSDIR} results_pig_${tuned_setting}
+
+	date >>  results_pig_${tuned_setting}/pig_config_info$suffix
+	uname -a >> results_pig_${tuned_setting}/pig_config_info$suffix
+	cat /proc/cmdline >> results_pig_${tuned_setting}/pig_config_info$suffix
+	echo using pig options -v -p 1 $pig_opt >> results_pig_${tuned_setting}/pig_config_info$suffix
+	lscpu >> results_pig_${tuned_setting}/pig_config_info$suffix
+	grep . /proc/sys/kernel/*numa* >> results_pig_${tuned_setting}/pig_config_info$suffix
+	grep -r . /proc/sys/kernel/*sched* >> results_pig_${tuned_setting}/pig_config_info$suffix
+	grep -r . /sys/kernel/mm/transparent_hugepage/* >> results_pig_${tuned_setting}/pig_config_info$suffix
+}
+
+setup_increments()
+{
+	#
+	# We want npoints points
+	# Note, we will start at 1 and then work our way up.  Last point will always be the max number of cpus
+	#
+	rm pig_threads.data
+	if [ $numb_cpus -gt "$points" ]; then
+        	increment_by=`echo "${numb_cpus}/${points}" | bc`
+        	start_increment_at=`echo "(${numb_cpus}-(${increment_by}*${points}))+${increment_by}" | bc`
+		if [  $start_increment_at -gt 1 ]; then
+			echo 1 >> pig_threads.data
+		fi
+	else
+        	start_increment_at=1
+        	increment_by=1
+	fi
+	for i in `seq $start_increment_at $increment_by $numb_cpus`
+		do
+			echo $i >> pig_threads.data
+	done
+}
+
+execute_pig_test()
+{
+		./pig -v -p 1 -t $threads -s $run_for ${pig_opt} >> results_pig_${tuned_setting}/iteration_${iteration}${suffix}
+		sleep 30
+}
+
+#
+# Retrieve various pieces of hardware information.
+#
+obtain_system_information
+
+#
+# Determine the starting cpus, and what we are to increment by.
+#
+setup_increments
+
+
+#
+# Now run pig
+#
+for iteration in 1 `seq 2 1 $iterations`
+	do
+	for threads in `cat pig_threads.data`
+	do
+		execute_pig_test
+	done
+done	

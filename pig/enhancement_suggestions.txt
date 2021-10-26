@@ -1,0 +1,22 @@
+
+Enhancement Suggestions:
+
+
+jmario suggests round robin thread pinning to CPUs: I have a "-R" flag for
+round_robin_threads in /shak/bgray/pig_tool/pig_joe.c. It pins each thread to a
+given CPU in a round-robin fashion across the box (thread 0 gets bound to cpu
+0, thread 1 gets bound to cpu 1,...) It may be useful to merge that into the
+main pig.c at some point.
+
+
+pportant suggests: Have you considered adding a load pattern combination? E.g.
+percent spin, sleep, int, fpu, mem, and/or dirty for a given time interval? The
+upstream "ssbench" tool does something similar for swift workloads, and you
+seem to almost have this with a combination of -l and -i options.  See the
+readme on Scenarios at https://github.com/swiftstack/ssbench Perhaps it would
+be useful to describe workloads that come close to mimicking known application
+behavior patterns? E.g. kvm VM startup, httpd, etc.  If you consider scenario
+files above, then we could encode these in scenario files to share common usage
+patterns.
+
+

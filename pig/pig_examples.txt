@@ -1,0 +1,651 @@
+
+
+// Get pig tool usage message
+
+# ./pig -h
+USAGE: ./pig <options> ...
+BEHAVIOR OPTIONS
+-h to print this usage info
+-i <WORK[:REST]> set intermittent load seconds
+-k <MIN[:MAX]> set min and optional max percent spin load
+-l <LOAD>, one of { 'spin', 'sleep', 'int', 'fpu', 'mem', 'dirty' }
+   The spin load is the default, and the only load with variable percent
+-m <N> to allocate <N> MBs of memory
+-n <N> for dirty load to write <N> random memory locations per second
+-p <N> to fork <N> processes
+-t <N> to create <N> threads in each process
+-s <N> to run for <N> seconds before quitting
+-r to round robin bind processes to nodes
+-v for verbose
+-V to show version info
+-w for mem load to also write memory.  Default is pointer-chasing reads
+MEMORY ATTRIBUTES
+-G for global per-process memory (rather than per thread memory)
+-I to use interleaved memory
+-H to use static huge page memory.
+-M to use mergeable memory.
+-T to use transparent huge page memory.
+-N to NOT use transparent huge page memory.
+-S to use shared anon memory. Default is private anon memory
+   Shared memory is not compatible with mergeable or THP memory
+-L <N> to set mem load stride length.  Default is 57 64-bit words
+
+
+
+
+// Start one process spinning... until ^C
+
+# ./pig
+^CPID: 100879  Threads:   1  #CPUS:   1  Stddev:   0.0   Avg:  38.0  Min: 38  Max: 38
+
+
+
+
+// Start one process spinning for 10 seconds
+
+# ./pig -s 10
+PID: 100880  Threads:   1  #CPUS:   1  Stddev:   0.0   Avg:  39.0  Min: 39  Max: 39
+
+
+
+
+// Run 10 processes spinning between 20-80% CPU utilization for 10 seconds
+
+# ./pig -p 10 -k 20:80 -s 10  
+PID: 100893  Threads:   1  #CPUS:   1  Stddev:   0.0   Avg:  14.0  Min: 14  Max: 14
+PID: 100891  Threads:   1  #CPUS:   1  Stddev:   0.0   Avg:  14.0  Min: 14  Max: 14
+PID: 100895  Threads:   1  #CPUS:   2  Stddev:   0.0   Avg:  15.0  Min: 15  Max: 15
+PID: 100897  Threads:   1  #CPUS:   2  Stddev:   0.0   Avg:  13.0  Min: 13  Max: 13
+PID: 100892  Threads:   1  #CPUS:   1  Stddev:   0.0   Avg:  16.0  Min: 16  Max: 16
+PID: 100889  Threads:   1  #CPUS:   1  Stddev:   0.0   Avg:  18.0  Min: 18  Max: 18
+PID: 100896  Threads:   1  #CPUS:   2  Stddev:   0.0   Avg:  15.0  Min: 15  Max: 15
+PID: 100898  Threads:   1  #CPUS:   2  Stddev:   0.0   Avg:  13.0  Min: 13  Max: 13
+PID: 100890  Threads:   1  #CPUS:   1  Stddev:   0.0   Avg:  16.0  Min: 16  Max: 16
+PID: 100894  Threads:   1  #CPUS:   1  Stddev:   0.0   Avg:  15.0  Min: 15  Max: 15
+
+
+
+
+// Run 10 processes for 10 seconds doing FPU work (e.g. sin(), sqrt())
+
+# ./pig -p 10 -s 10 -l fpu
+PID: 100918  Threads:   1  #CPUS:   1  Stddev:   0.0   Avg: 109.0  Min: 109  Max: 109
+PID: 100922  Threads:   1  #CPUS:   1  Stddev:   0.0   Avg: 109.0  Min: 109  Max: 109
+PID: 100915  Threads:   1  #CPUS:   1  Stddev:   0.0   Avg: 109.0  Min: 109  Max: 109
+PID: 100919  Threads:   1  #CPUS:   1  Stddev:   0.0   Avg: 110.0  Min: 110  Max: 110
+PID: 100923  Threads:   1  #CPUS:   1  Stddev:   0.0   Avg: 110.0  Min: 110  Max: 110
+PID: 100917  Threads:   1  #CPUS:   1  Stddev:   0.0   Avg: 110.0  Min: 110  Max: 110
+PID: 100916  Threads:   1  #CPUS:   1  Stddev:   0.0   Avg: 110.0  Min: 110  Max: 110
+PID: 100921  Threads:   1  #CPUS:   1  Stddev:   0.0   Avg: 110.0  Min: 110  Max: 110
+PID: 100920  Threads:   1  #CPUS:   1  Stddev:   0.0   Avg: 110.0  Min: 110  Max: 110
+PID: 100924  Threads:   1  #CPUS:   1  Stddev:   0.0   Avg: 110.0  Min: 110  Max: 110
+
+
+
+
+// Start 3 processes, each with 4 threads, spinning for 10 seconds
+
+# ./pig -p 3 -t 4 -s 10
+PID: 100934  Threads:   4  #CPUS:   4  Stddev:   0.0   Avg:  39.0  Min: 39  Max: 39
+PID: 100935  Threads:   4  #CPUS:   4  Stddev:   0.0   Avg:  39.0  Min: 39  Max: 39
+PID: 100936  Threads:   4  #CPUS:   4  Stddev:   0.0   Avg:  39.0  Min: 39  Max: 39
+
+
+
+
+// Verbosely run one process with 17 threads for 100 seconds.  The table shows
+// approximately how many seconds the thread ran on each CPU.  Rows should
+// normally sum to run-time seconds.
+
+# ./pig -v -t 17 -s 100
+system nodes = 8
+system cpus  = 80
+processes  = 1
+threads    = 17
+seconds    = 100
+megabytes  = 0
+mem stride = 57
+min_pct    = 100
+max_pct    = 100
+work_secs  = 0
+rest_secs  = 0
+
+Tally of times running on each cpu:
+        1   2   3  11  12  21  22  31  32  41  42  51  52  61  62  71  72
+      --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+ 000:   .   .   .   .   .   .   .   .   .   .   .   .   .   .   . 100   .
+ 001:   .   .   .   .   .   .   . 100   .   .   .   .   .   .   .   .   .
+ 002:   .   .   . 100   .   .   .   .   .   .   .   .   .   .   .   .   .
+ 003:   .   .   .   .   .   .   .   .   .   .   . 100   .   .   .   .   .
+ 004: 100   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .
+ 005:   .   .   .   .   .   .   .   .   . 100   .   .   .   .   .   .   .
+ 006:   .   .   .   .   . 100   .   .   .   .   .   .   .   .   .   .   .
+ 007:   .   .   .   .   .   .   .   .   .   .   .   .   . 100   .   .   .
+ 008:   . 100   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .
+ 009:   .   .   .   .   .   .   .   .   .   . 100   .   .   .   .   .   .
+ 010:   .   .   .   .   .   . 100   .   .   .   .   .   .   .   .   .   .
+ 011:   .   .   .   .   .   .   .   .   .   .   .   .   .   . 100   .   .
+ 012:   .   .   .   . 100   .   .   .   .   .   .   .   .   .   .   .   .
+ 013:   .   .   .   .   .   .   .   .   .   .   .   . 100   .   .   .   .
+ 014:   .   .   .   .   .   .   .   . 100   .   .   .   .   .   .   .   .
+ 015:   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   . 100
+ 016:   .   . 100   .   .   .   .   .   .   .   .   .   .   .   .   .   .
+PID: 101279  Threads:  17  #CPUS:  17  Stddev:   1.0   Avg: 394.5  Min: 393  Max: 396
+
+
+
+
+// Verbosely run 5 processes, each with 6 threads, alternating between 10
+// seconds on and 5 seconds off, spinning for 60 seconds total.
+
+# ./pig -v -p 5 -t 6 -i 10:5 -s 60
+system nodes = 8
+system cpus  = 80
+processes  = 5
+threads    = 6
+seconds    = 60
+megabytes  = 0
+mem stride = 57
+min_pct    = 100
+max_pct    = 100
+work_secs  = 10
+rest_secs  = 5
+
+Tally of times running on each cpu:
+ 102052       21  41  42  61  62  71
+ 102052      --- --- --- --- --- ---
+ 102052 000:   .   .   .   .   .  41
+ 102052 001:   .  41   .   .   .   .
+ 102052 002:  41   .   .   .   .   .
+ 102052 003:   .   .   .  41   .   .
+ 102052 004:   .   .  41   .   .   .
+ 102052 005:   .   .   .   .  41   .
+PID: 102052  Threads:   6  #CPUS:   6  Stddev:   3.0   Avg: 158.3  Min: 153  Max: 161
+
+Tally of times running on each cpu:
+ 102053        2   3  20  22  30  31  32  40  52
+ 102053      --- --- --- --- --- --- --- --- ---
+ 102053 000:   .   .   .   .   .  41   .   .   .
+ 102053 001:   .   .   .   .   .   .  41   .   .
+ 102053 002:   3   .   .   .   .   .   .  38   .
+ 102053 003:   .   .   .  41   .   .   .   .   .
+ 102053 004:   .   .   .   .   .   .   .   .  41
+ 102053 005:   .   1   1   .  39   .   .   .   .
+PID: 102053  Threads:   6  #CPUS:   9  Stddev:   2.7   Avg: 159.2  Min: 154  Max: 161
+[root@perf76 pig_tool]# 
+Tally of times running on each cpu:
+ 102054       11  12  13  14  43  72
+ 102054      --- --- --- --- --- ---
+ 102054 000:  41   .   .   .   .   .
+ 102054 001:   .  41   .   .   .   .
+ 102054 002:   .   .   .   .  41   .
+ 102054 003:   .   .  41   .   .   .
+ 102054 004:   .   .   .   .   .  41
+ 102054 005:   .   .   .  41   .   .
+PID: 102054  Threads:   6  #CPUS:   6  Stddev:   1.2   Avg: 158.3  Min: 157  Max: 161
+
+Tally of times running on each cpu:
+ 102055       23  51  53  63  64  73
+ 102055      --- --- --- --- --- ---
+ 102055 000:   .  41   .   .   .   .
+ 102055 001:   .   .   .  41   .   .
+ 102055 002:   .   .   .   .  41   .
+ 102055 003:   .   .   .   .   .  41
+ 102055 004:   .   .  41   .   .   .
+ 102055 005:  41   .   .   .   .   .
+PID: 102055  Threads:   6  #CPUS:   6  Stddev:   3.0   Avg: 159.7  Min: 153  Max: 161
+
+Tally of times running on each cpu:
+ 102056        0   4   5   6   7  15  20  24  44
+ 102056      --- --- --- --- --- --- --- --- ---
+ 102056 000:   .   .   2   .   .   .  39   .   .
+ 102056 001:   .  22   .   .   .   .   .   .  19
+ 102056 002:   .   .   .   .   .   .   .  41   .
+ 102056 003:  19   .   .   .   .  22   .   .   .
+ 102056 004:   .   .   .  41   .   .   .   .   .
+ 102056 005:   .   .   .   .  41   .   .   .   .
+PID: 102056  Threads:   6  #CPUS:   9  Stddev:   3.1   Avg: 157.3  Min: 153  Max: 161
+
+
+
+
+// Run 8 processes for 100 seconds that mostly sleep, but each consume 8GB RAM
+
+# ./pig -p 8 -s 100 -l sleep -m 8000 &
+[1] 101531
+# jobs
+[1]+  Running                 ./pig -p 8 -s 100 -l sleep -m 8000 &
+# uptime
+ 10:45:01 up 100 days, 10:35,  2 users,  load average: 0.53, 0.28, 0.52
+# numastat -cm pig
+
+Per-node process memory usage (in MBs)
+PID           Node 0 Node 1 Node 2 Node 3 Node 4 Node 5 Node 6 Node 7 Total
+------------  ------ ------ ------ ------ ------ ------ ------ ------ -----
+101531 (pig)       0      0      0      0      0      0      0   8000  8001
+101532 (pig)       0      0      0   8000      0      0      0      0  8000
+101533 (pig)       0      0      0      0      0   8000      0      0  8000
+101534 (pig)       0   8000      0      0      0      0      0      0  8000
+101535 (pig)       0      0      0      0      0      0   8000      0  8000
+101536 (pig)    8000      0      0      0      0      0      0      0  8000
+101537 (pig)       0      0      0      0   8000      0      0      0  8000
+101538 (pig)       0      0   8000      0      0      0      0      0  8000
+------------  ------ ------ ------ ------ ------ ------ ------ ------ -----
+Total           8000   8000   8000   8002   8000   8000   8000   8001 64004
+
+Per-node system memory usage (in MBs):
+                 Node 0 Node 1 Node 2 Node 3 Node 4 Node 5 Node 6 Node 7   Total
+                 ------ ------ ------ ------ ------ ------ ------ ------ -------
+MemTotal         131061 131072 131072 131072 131072 131072 131072 131072 1048565
+MemFree          114354 118006 120202 119894 120215 120052 120191 119879  952792
+MemUsed           16707  13066  10870  11178  10857  11020  10881  11193   95773
+Active            12608  10106   8031   8109   8019   8140   8018   8185   71215
+Inactive            393     35      1    135      7     43     55     96     764
+Active(anon)       8046   8003   8008   8006   8009   8011   8006   8053   64142
+Inactive(anon)       55      0      0      0      0      1      0      2      57
+Active(file)       4562   2103     23    103     10    129     12    132    7074
+Inactive(file)      338     35      1    135      7     42     55     94     707
+Unevictable           0      0      0      0      0      0      0      0       0
+Mlocked               0      0      0      0      0      0      0      0       0
+Dirty                 0      0      0      0      0      0      0      0       0
+Writeback             0      0      0      0      0      0      0      0       0
+FilePages          4996   2139     24    238     17    179     67    234    7894
+Mapped               10      0      2      0      0      9     11      3      35
+AnonPages          8005   8003   8130   8006   8009   7907   8005   8046   64112
+Shmem                96      0      0      0      0      8      0      8     113
+KernelStack          10      2      1      1      1      1      1      2      19
+PageTables           17     16     16     17     16     16     16     17     130
+NFS_Unstable          0      0      0      0      0      0      0      0       0
+Bounce                0      0      0      0      0      0      0      0       0
+WritebackTmp          0      0      0      0      0      0      0      0       0
+Slab                413     31     48     45     34     53     26     54     704
+SReclaimable        373     12     26     24     17     34      9     25     519
+SUnreclaim           40     19     22     21     17     19     18     30     185
+AnonHugePages      7998   7998   8126   7998   7998   7902   7998   8008   64026
+HugePages_Total       0      0      0      0      0      0      0      0       0
+HugePages_Free        0      0      0      0      0      0      0      0       0
+HugePages_Surp        0      0      0      0      0      0      0      0       0
+
+
+
+
+// Verbosely run 1 process with 8 threads for 100 seconds using global
+// process-wide 8GB memory and between 30% to 80% CPU utilization.  This is
+// kind of like a fake VM guest, except the load is just spinning and not
+// generating much memory traffic at all.
+
+# ./pig -v -p 1 -t 8 -s 100 -Gm 8000 -k30:80
+system nodes = 8
+system cpus  = 80
+processes  = 1
+threads    = 8
+seconds    = 100
+megabytes  = 8000
+mem stride = 57
+min_pct    = 30
+max_pct    = 80
+work_secs  = 0
+rest_secs  = 0
+
+Tally of times running on each cpu:
+        1  11  31  41  51  61  71  72
+      --- --- --- --- --- --- --- ---
+ 000:   .   .   .   .   .   . 100   .
+ 001:   .   . 100   .   .   .   .   .
+ 002:   .   .   .   . 100   .   .   .
+ 003:   . 100   .   .   .   .   .   .
+ 004:   .   .   .   .   . 100   .   .
+ 005: 100   .   .   .   .   .   .   .
+ 006:   .   .   . 100   .   .   .   .
+ 007:   .   .   .   .   .   .   . 100
+PID: 101568  Threads:   8  #CPUS:   8  Stddev:   2.4   Avg: 198.5  Min: 194  Max: 202
+
+
+
+
+// Verbosely run three 8 VCPU 8GB "guests" for 100 seconds with variable CPU
+// load.  Note that the scheduler runs the threads on multiple CPUs, but the
+// CPU migrations are fairly mild in this case.
+
+# ./pig -v -p 3 -t 8 -s 100 -Gm 8000 -k 30:80
+system nodes = 8
+system cpus  = 80
+processes  = 3
+threads    = 8
+seconds    = 100
+megabytes  = 8000
+mem stride = 57
+min_pct    = 30
+max_pct    = 80
+work_secs  = 0
+rest_secs  = 0
+
+Tally of times running on each cpu:
+ 101606        1   2  10  21  41  51  60  61  62  71  72
+ 101606      --- --- --- --- --- --- --- --- --- --- ---
+ 101606 000:   .   .   .   .   .   .  39   .   .  61   .
+ 101606 001:   .   .   .   .   . 100   .   .   .   .   .
+ 101606 002:   .   .   .   .   .   .   .  61  39   .   .
+ 101606 003: 100   .   .   .   .   .   .   .   .   .   .
+ 101606 004:   .   .   .   . 100   .   .   .   .   .   .
+ 101606 005:   .   .   . 100   .   .   .   .   .   .   .
+ 101606 006:   .   .   .   .   .   .  54  39   .   .   7
+ 101606 007:   .   2  98   .   .   .   .   .   .   .   .
+PID: 101606  Threads:   8  #CPUS:  13  Stddev:   2.7   Avg: 195.0  Min: 190  Max: 199
+[root@perf76 pig_tool]# 
+Tally of times running on each cpu:
+ 101608        1   4  11  21  22  31  32  41  43  51  54  71  75  76
+ 101608      --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+ 101608 000:   .   . 100   .   .   .   .   .   .   .   .   .   .   .
+ 101608 001:   .   .   .   .   .   .   .   .   .   .   .   1  99   .
+ 101608 002:   .   .   .   .   .   1  99   .   .   .   .   .   .   .
+ 101608 003:   .   .   .   .   .   .   .   .   .   1  99   .   .   .
+ 101608 004:   1  99   .   .   .   .   .   .   .   .   .   .   .   .
+ 101608 005:   .   .   .   .   .   .   .   1  99   .   .   .   .   .
+ 101608 006:   .   .   .   1  99   .   .   .   .   .   .   .   .   .
+ 101608 007:   .   .   .   .   .   .   .   .   .   .   .   1   .  99
+PID: 101608  Threads:   8  #CPUS:  15  Stddev:   3.5   Avg: 196.0  Min: 192  Max: 202
+
+Tally of times running on each cpu:
+ 101607        0   1   3  21  22  23  31  41  42  51  52  53  71  73  74
+ 101607      --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+ 101607 000:   .   .   .   .   .   . 100   .   .   .   .   .   .   .   .
+ 101607 001:   .   .   .   .   .   .   .   .   .   .   .   .   1  99   .
+ 101607 002:   .   .   .   .   .   .   .   .   .   1  99   .   .   .   .
+ 101607 003:   .   .   .   1   1  98   .   .   .   .   .   .   .   .   .
+ 101607 004:   .   .   .   .   .   .   .   1  99   .   .   .   .   .   .
+ 101607 005:  98   1   1   .   .   .   .   .   .   .   .   .   .   .   .
+ 101607 006:   .   .   .   .   .   .   .   .   .   .   .   .   1   .  99
+ 101607 007:   .   .   .   .   .   .   .   .   .   1   .  99   .   .   .
+PID: 101607  Threads:   8  #CPUS:  17  Stddev:   4.1   Avg: 197.8  Min: 191  Max: 203
+
+
+
+
+// Verbosely run three 8 VCPU 8GB "guests" with variable CPU load for 100
+// seconds.  The "-r" option here round-robin pins the processes to different
+// nodes.  The scheduler still spreads them across the node CPUs -- probably
+// because of the "variable" load.
+
+./pig -v -p 3 -t 8 -s 100 -r -Gm 8000 -k30:80
+system nodes = 8
+system cpus  = 80
+processes  = 3
+threads    = 8
+seconds    = 100
+megabytes  = 8000
+mem stride = 57
+min_pct    = 30
+max_pct    = 80
+work_secs  = 0
+rest_secs  = 0
+
+Tally of times running on each cpu:
+ 101672       20  21  22  23  24  25  26  27  28
+ 101672      --- --- --- --- --- --- --- --- ---
+ 101672 000: 100   .   .   .   .   .   .   .   .
+ 101672 001:   . 100   .   .   .   .   .   .   .
+ 101672 002:   .   . 100   .   .   .   .   .   .
+ 101672 003:   .   .   .  59   .   .   .   .  41
+ 101672 004:   .   .   .   . 100   .   .   .   .
+ 101672 005:   .   .   .   .   . 100   .   .   .
+ 101672 006:   .   .   .   .   .   . 100   .   .
+ 101672 007:   .   .   .   .   .   .   . 100   .
+PID: 101672  Threads:   8  #CPUS:   9  Stddev:   3.2   Avg: 191.0  Min: 187  Max: 196
+
+Tally of times running on each cpu:
+ 101670        0   1   2   3   4   5   6   7   8   9
+ 101670      --- --- --- --- --- --- --- --- --- ---
+ 101670 000:   .  19   .   .   .   .   .  63  18   .
+ 101670 001:   .   .  38   1   .  46  15   .   .   .
+ 101670 002:  29  25   .  46   .   .   .   .   .   .
+ 101670 003:   .   .   .   . 100   .   .   .   .   .
+ 101670 004:   1   .  36  21   .  42   .   .   .   .
+ 101670 005:  25  37  20   .   .   .   1   .   .  17
+ 101670 006:   7  19   .   .   .   2  43  29   .   .
+ 101670 007:   .   .   1   .   .   .  28   .  53  18
+PID: 101670  Threads:   8  #CPUS:  29  Stddev:   5.2   Avg: 191.8  Min: 185  Max: 202
+[root@perf76 pig_tool]# 
+Tally of times running on each cpu:
+ 101671       10  11  12  13  14  15  16  17  18
+ 101671      --- --- --- --- --- --- --- --- ---
+ 101671 000: 100   .   .   .   .   .   .   .   .
+ 101671 001:   . 100   .   .   .   .   .   .   .
+ 101671 002:   .   .   1   .   .   .   .  99   .
+ 101671 003:   .   .   . 100   .   .   .   .   .
+ 101671 004:   .   .   .   .  92   8   .   .   .
+ 101671 005:   .   .   .   .   .  83   .   .  17
+ 101671 006:   .   .   .   .   .   . 100   .   .
+ 101671 007:   .   1  99   .   .   .   .   .   .
+PID: 101671  Threads:   8  #CPUS:  12  Stddev:   4.3   Avg: 191.9  Min: 185  Max: 198
+
+
+
+
+// Verbosely run 3 "guest" processes with 8 VCPU threads and 8GB RAM for 60
+// seconds with a heavy memory load.  Note the slow remote memory makes times
+// tally total to be less than 60
+
+# ./pig -v -p 3 -t 8 -Gm 8000 -s 60 -l mem
+system nodes = 8
+system cpus  = 80
+processes  = 3
+threads    = 8
+seconds    = 60
+megabytes  = 8000
+mem stride = 57
+min_pct    = 100
+max_pct    = 100
+work_secs  = 0
+rest_secs  = 0
+
+Tally of times running on each cpu:
+ 101718        1   2  21  41  44  51  61  71  72
+ 101718      --- --- --- --- --- --- --- --- ---
+ 101718 000:   .   .   .   .   .   .   .  38   .
+ 101718 001:   .   .   .   .   .  19   .   .   .
+ 101718 002:   .   .   .   .   .   .  38   .   .
+ 101718 003:   2   .   .   .  17   .   .   .   .
+ 101718 004:   .   .   .  19   .   .   .   .   .
+ 101718 005:   .   .  17   .   .   .   .   .   .
+ 101718 006:   .   .   .   .   .   .   .   .  38
+ 101718 007:   .  17   .   .   .   .   .   .   .
+PID: 101718  Threads:   8  #CPUS:   9  Stddev:   9.6   Avg:  24.6  Min: 16  Max: 37
+[root@perf76 pig_tool]# 
+Tally of times running on each cpu:
+ 101720        3   4  11  14  23  34  43  50  73
+ 101720      --- --- --- --- --- --- --- --- ---
+ 101720 000:   .   .  34   .   .   .   .   .   .
+ 101720 001:   .  34   .   .   .   .   .   .   .
+ 101720 002:   .   .   .  34   .   .   .   .   .
+ 101720 003:   .   .   .   .   .   .   .   .  17
+ 101720 004:   .   .   .   .   .   .  17   .   .
+ 101720 005:   .   .   .   .  19   .   .   .   .
+ 101720 006:   2   .   .   .   .   .   .  15   .
+ 101720 007:   .   .   .   .   .  19   .   .   .
+PID: 101720  Threads:   8  #CPUS:   9  Stddev:   7.9   Avg:  22.9  Min: 16  Max: 33
+
+Tally of times running on each cpu:
+ 101719       12  22  31  32  33  42  52  62
+ 101719      --- --- --- --- --- --- --- ---
+ 101719 000:   .   .  38   .   .   .   .   .
+ 101719 001:   .   .   .  38   .   .   .   .
+ 101719 002:   .   .   .   .   .  17   .   .
+ 101719 003:   .  38   .   .   .   .   .   .
+ 101719 004:   .   .   .   .   .   .  17   .
+ 101719 005:  19   .   .   .   .   .   .   .
+ 101719 006:   .   .   .   .   .   .   .  17
+ 101719 007:   .   .   .   .  38   .   .   .
+PID: 101719  Threads:   8  #CPUS:   8  Stddev:  10.3   Avg:  26.8  Min: 16  Max: 37
+
+
+
+
+// Verbosely run 3 "guest" pinned processes with 8 VCPU threads and 8GB RAM for
+// 60 seconds with a memory load.  Note the average work done is much higher
+// versus the unpinned "guests" above.
+
+# ./pig -v -p 3 -t 8 -r -Gm 8000 -s 60 -l mem
+system nodes = 8
+system cpus  = 80
+processes  = 3
+threads    = 8
+seconds    = 60
+megabytes  = 8000
+mem stride = 57
+min_pct    = 100
+max_pct    = 100
+work_secs  = 0
+rest_secs  = 0
+
+Tally of times running on each cpu:
+ 101791       10  11  12  13  14  15  16  17
+ 101791      --- --- --- --- --- --- --- ---
+ 101791 000:  44   .   .   .   .   .   .   .
+ 101791 001:   .  44   .   .   .   .   .   .
+ 101791 002:   .   .  44   .   .   .   .   .
+ 101791 003:   .   .   .  44   .   .   .   .
+ 101791 004:   .   .   .   .  44   .   .   .
+ 101791 005:   .   .   .   .   .  44   .   .
+ 101791 006:   .   .   .   .   .   .  44   .
+ 101791 007:   .   .   .   .   .   .   .  44
+PID: 101791  Threads:   8  #CPUS:   8  Stddev:   0.0   Avg:  43.0  Min: 43  Max: 43
+
+Tally of times running on each cpu:
+ 101792       20  21  22  23  24  25  26  27
+ 101792      --- --- --- --- --- --- --- ---
+ 101792 000:  45   .   .   .   .   .   .   .
+ 101792 001:   .  45   .   .   .   .   .   .
+ 101792 002:   .   .  45   .   .   .   .   .
+ 101792 003:   .   .   .  45   .   .   .   .
+ 101792 004:   .   .   .   .  45   .   .   .
+ 101792 005:   .   .   .   .   .  45   .   .
+ 101792 006:   .   .   .   .   .   .  45   .
+ 101792 007:   .   .   .   .   .   .   .  45
+PID: 101792  Threads:   8  #CPUS:   8  Stddev:   0.0   Avg:  44.0  Min: 44  Max: 44
+
+Tally of times running on each cpu:
+ 101790        1   2   3   4   5   6   7   8
+ 101790      --- --- --- --- --- --- --- ---
+ 101790 000:  44   .   .   .   .   .   .   .
+ 101790 001:   .  44   .   .   .   .   .   .
+ 101790 002:   .   .  44   .   .   .   .   .
+ 101790 003:   .   .   .  44   .   .   .   .
+ 101790 004:   .   .   .   .  44   .   .   .
+ 101790 005:   .   .   .   .   .  44   .   .
+ 101790 006:   .   .   .   .   .   .  44   .
+ 101790 007:   .   .   .   .   .   .   .  44
+PID: 101790  Threads:   8  #CPUS:   8  Stddev:   0.0   Avg:  43.0  Min: 43  Max: 43
+
+
+
+
+// Verbosely run 7 processes, each with 8 threads, each thread with their own
+// 10 GBs of memory, using the 'dirty' workload writing 10000 random memory
+// locations, alternating 10 seconds on and 5 seconds off, for a total of 60
+// seconds.
+
+#  ./pig -v -p 7 -t 8 -m 10000 -l dirty -n 10000 -i 10:5 -s 60 
+system nodes = 8
+system cpus  = 80
+processes  = 7
+threads    = 8
+seconds    = 60
+megabytes  = 10000
+mem stride = 57
+min_pct    = 100
+max_pct    = 100
+work_secs  = 10
+rest_secs  = 5
+
+Tally of times running on each cpu:
+ 101913       11  14  15  16  55  61  62  66  69  70  71  72  73  74  75  76  77  78  79
+ 101913      --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+ 101913 000:   .   .   .   .  31   .   .   .   .   .   .   .   .   .   .   .   .   .   .
+ 101913 001:   .   .   .   .   .   .   .   .   .   2   1   9   4   4   5   .   3   .   .
+ 101913 002:   .   .   1  27   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .
+ 101913 003:   1  27   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .
+ 101913 004:   .   .   .   .   .   1   .   .   .   3   5   5   2   2   2   3   3   1   1
+ 101913 005:   .   .   .   .   .   .   1   .  26   .   .   .   .   .   .   .   .   .   .
+ 101913 006:   .   .   .   .   .   1   .  26   .   .   .   .   .   .   .   .   .   .   .
+ 101913 007:   1   .  27   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .
+PID: 101913  Threads:   8  #CPUS:  29  Stddev:   1.2   Avg:  27.1  Min: 26  Max: 30
+
+Tally of times running on each cpu:
+ 101912       12  14  17  18  21  22  28  30  42  45  53  56  62  64  65  66  67
+ 101912      --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+ 101912 000:   .   1   .  30   .   .   .   .   .   .   .   .   .   .   .   .   .
+ 101912 001:   1   .  27   .   .   .   .   .   .   .   .   .   .   .   .   .   .
+ 101912 002:   .   .   .   .   .   .   .   .   1  27   .   .   .   .   .   .   .
+ 101912 003:   .   .   .   .   1   .  27   .   .   .   .   .   .   .   .   .   .
+ 101912 004:   .   .   .   .   .   .   .   .   .   .   1  27   .   .   .   .   .
+ 101912 005:   .   .   .   .   .   .   .   .   .   .   .   .   1  26   .   .   .
+ 101912 006:   .   .   .   .   .   .   .   .   .   .   .   .   7   .   1  16   3
+ 101912 007:   .   .   .   .   .   1   .  27   .   .   .   .   .   .   .   .   .
+PID: 101912  Threads:   8  #CPUS:  18  Stddev:   1.2   Avg:  27.1  Min: 26  Max: 30
+
+Tally of times running on each cpu:
+ 101914        3   5   6  12  23  26  31  34  52  57  61  63  70  71  72  73  74  75  76  77  78  79
+ 101914      --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+ 101914 000:  31   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .
+ 101914 001:   .   .   .   .   .   .   1  28   .   .   .   .   .   .   .   .   .   .   .   .   .   .
+ 101914 002:   .   .   .   .   .   .   .   .   .   .   .   .   4  13   2   3   1   1   1   1   1   1
+ 101914 003:   .   .  27   1   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .
+ 101914 004:   .   .   .   .   1  27   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .
+ 101914 005:   .   .   .   .   .   .   .   .   1  27   .   .   .   .   .   .   .   .   .   .   .   .
+ 101914 006:   .   .   .   .   .   .   .   .   .   .   1  26   .   .   .   .   .   .   .   .   .   .
+ 101914 007:   1  27   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .
+PID: 101914  Threads:   8  #CPUS:  23  Stddev:   1.1   Avg:  27.4  Min: 26  Max: 30
+
+Tally of times running on each cpu:
+ 101911        1   2  20  21  22  24  25  27  32  52  53  61  70
+ 101911      --- --- --- --- --- --- --- --- --- --- --- --- ---
+ 101911 000:   .   .   .   .   .   .  31   .   .   .   .   .   .
+ 101911 001:   .   .   .   1   .  27   .   .   .   .   .   .   .
+ 101911 002:   .   .   .   .   .   .   .   .  29   .   .   .   .
+ 101911 003:   .  28   .   .   .   .   .   .   .   .   .   .   .
+ 101911 004:   .   .   .   .   1   .   .  27   .   .   .   .   .
+ 101911 005:   .   .   .   .   .   .   .   .   .   .   .   1  27
+ 101911 006:   1   .  27   .   .   .   .   .   .   .   .   .   .
+ 101911 007:   .   .   .   .   .   .   .   .   .   1  27   .   .
+PID: 101911  Threads:   8  #CPUS:  13  Stddev:   1.0   Avg:  27.5  Min: 27  Max: 30
+
+Tally of times running on each cpu:
+ 101917        7  11  19  31  33  35  41  43  46  51  64  65  68
+ 101917      --- --- --- --- --- --- --- --- --- --- --- --- ---
+ 101917 000:   .   .   .   .   .   .   .   .   .   .   .  30   1
+ 101917 001:   .   .   .   .   1  28   .   .   .   .   .   .   .
+ 101917 002:   .   .   .   .   .   .   .   .   .  28   .   .   .
+ 101917 003:   .   .   .  29   .   .   .   .   .   .   .   .   .
+ 101917 004:   .   .   .   .   .   .  28   .   .   .   .   .   .
+ 101917 005:   .   .  27   .   .   .   .   .   .   .   1   .   .
+ 101917 006:   .   .   .   .   .   .   .   1  27   .   .   .   .
+ 101917 007:  27   1   .   .   .   .   .   .   .   .   .   .   .
+PID: 101917  Threads:   8  #CPUS:  13  Stddev:   1.0   Avg:  27.6  Min: 27  Max: 30
+
+Tally of times running on each cpu:
+ 101910        1   4  31  33  42  52  62  64  72  74  75
+ 101910      --- --- --- --- --- --- --- --- --- --- ---
+ 101910 000:   .   .   .   .   .   .   .   .   .  31   .
+ 101910 001:   .   .   .   .   .   .   .   .  28   .   .
+ 101910 002:   .   .   1  28   .   .   .   .   .   .   .
+ 101910 003:   1  27   .   .   .   .   .   .   .   .   .
+ 101910 004:   .   .   .   .   .  28   .   .   .   .   .
+ 101910 005:   .   .   .   .  28   .   .   .   .   .   .
+ 101910 006:   .   .   .   .   .   .   1  26   .   .   .
+ 101910 007:   .   .   .   .   .   .   .   .   .   .  28
+PID: 101910  Threads:   8  #CPUS:  11  Stddev:   1.1   Avg:  27.4  Min: 26  Max: 30
+
+Tally of times running on each cpu:
+ 101915       13  21  22  30  31  40  43  44  52  54  61  62  65
+ 101915      --- --- --- --- --- --- --- --- --- --- --- --- ---
+ 101915 000:   .   .   .   .   .   .  31   .   .   .   .   .   .
+ 101915 001:   .   .   .   .   .   .   .   .   1  27   .   .   .
+ 101915 002:   .   .   1   .  27   .   .   .   .   .   .   .   .
+ 101915 003:   .   1   .  28   .   .   .   .   .   .   .   .   .
+ 101915 004:   .   .   .   .   .   .   .   .   .   .   1  17   9
+ 101915 005:   .   .   .   .   .   .   .  28   .   .   .   .   .
+ 101915 006:  28   .   .   .   .   .   .   .   .   .   .   .   .
+ 101915 007:   .   .   .   .   .  27   .   .   .   .   1   .   .
+PID: 101915  Threads:   8  #CPUS:  14  Stddev:   1.1   Avg:  27.4  Min: 26  Max: 30
+
