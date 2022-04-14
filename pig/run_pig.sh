@@ -19,7 +19,7 @@ regression=""
 
 usage()
 {
-	echo "Usage:"
+	echo "$1 usage:"
 	echo "  --pig_opts: options to pass directly to pig"
 	echo "  --regression: If present, we run a limted pig test. 8 points, 120 seconds each point"
 	echo "  --tools_git: Pointer to the test_tools git.  Default is ${tools_git}.  Top directory is always test_tools"
@@ -33,6 +33,7 @@ usage()
 tools_git=https://github.com/dvalinrh/test_tools
 
 found=0
+show_usage=0
 for arg in "$@"; do
 	if [ $found -eq 1 ]; then
 		tools_git=$arg
@@ -48,7 +49,7 @@ for arg in "$@"; do
 	# result in the script exiting with out giving the test options.
 	#
 	if [[ $arg == "--usage" ]]; then
-		usage $0
+		show_usage=1
 	fi
 done
 
@@ -62,6 +63,10 @@ if [ ! -d "test_tools" ]; then
                 echo pulling git $tools_git failed.
                 exit
         fi
+fi
+
+if [ $show_usage -eq 1 ]; then
+	usage $0
 fi
 
 # Variables set by general setup.
