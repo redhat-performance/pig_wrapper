@@ -12,8 +12,12 @@ arguments="$@"
 pig_opts=""
 test_name="pig"
 
-chars=`echo $0 | awk -v RS='/' 'END{print NR-1}'`
-run_dir=`echo $0 | cut -d'/' -f 1-${chars}`
+if [[ $0 == "./"* ]]; then
+	run_dir=`pwd`
+else
+	chars=`echo $0 | awk -v RS='/' 'END{print NR-1}'`
+	run_dir=`echo $0 | cut -d'/' -f 1-${chars}`
+fi
 
 regression=""
 
