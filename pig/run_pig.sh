@@ -208,8 +208,8 @@ run_pig_test()
 if [ $to_pbench -eq 1 ]; then
 	source ~/.bashrc
 
-	echo $TOOLS_BIN/execute_pbench --cmd_executing "$0" ${arguments} --test ${test_name} --spacing 11
-	$TOOLS_BIN/execute_pbench --cmd_executing "$0" ${arguments} --test ${test_name} --spacing 11
+	echo $TOOLS_BIN/execute_via_pbench --cmd_executing "$0" ${arguments} --test ${test_name} --spacing 11 --pbench_stats $to_pstats
+	$TOOLS_BIN/execute_via_pbench --cmd_executing "$0" ${arguments} --test ${test_name} --spacing 11 --pbench_stats $to_pstats
 else
 	#
 	# For system running amzn, make sure the numa packages are installed.
