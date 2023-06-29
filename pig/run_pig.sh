@@ -12,11 +12,24 @@ arguments="$@"
 pig_opts=""
 test_name="pig"
 
+curdir=`pwd`
 if [[ $0 == "./"* ]]; then
-	run_dir=`pwd`
+	chars=`echo $0 | awk -v RS='/' 'END{print NR-1}'`
+	if [[ $chars == 1 ]]; then
+		run_dir=`pwd`
+	else
+		run_dir=`echo $0 | cut -d'/' -f 1-${chars} | cut -d'.' -f2-`
+		run_dir="${curdir}${run_dir}"
+	fi
+elif [[ $0 != "/"* ]]; then
+	dir=`echo $0 | rev | cut -d'/' -f2- | rev`
+	run_dir="${curdir}/${dir}"
 else
 	chars=`echo $0 | awk -v RS='/' 'END{print NR-1}'`
 	run_dir=`echo $0 | cut -d'/' -f 1-${chars}`
+	if [[ $run_dir != "/"* ]]; then
+		run_dir=${curdir}/${run_dir}
+	fi
 fi
 
 regression=""
@@ -147,7 +160,9 @@ produce_results_info()
 {
 	grep -H "#CPUS:" iteration*  | cut -d: -f 4,5 | sed "s/  / /g" | cut -d' ' -f 2,4 | sort -n -k2 > temp_data
 
-	rm results_${test_name}.csv results.txt > /dev/null
+	if [[ -f results_${test_name}.csv ]]; then
+		rm results_${test_name}.csv > /dev/null
+	fi
 	printf "%11s %11s\n"  "#threads" "sched_eff" > results.txt
 	echo  "#threads" "sched_eff" > results_${test_name}.csv
 	cpu_total=0
@@ -225,7 +240,7 @@ else
 	#
 	# Check to see if we have a parameters file to use.
 	#
-	file=`/$to_home_root/${to_user}/tools_bin/get_params_file -d /$to_home_root/${to_user} -c ${config_name} -t ${test_name}`
+	file=`${curdir}/tools_bin/get_params_file -d /$to_home_root/${to_user} -c ${config_name} -t ${test_name}`
 
 	if test -f "$file"; then
 		#
