@@ -12,7 +12,7 @@ Packages required: gcc,numactl-devel,bc
 To run:
 [root@hawkeye ~]# git clone https://github.com/redhat-performance/pig_wrapper
 [root@hawkeye ~]# pig_wrapper/pig/run_pig.sh
-
+```
 Options
   --pig_opts: options to pass directly to pig
   --regression: If present, we run a limted pig test. 8 points, 120 seconds each point
@@ -32,5 +32,6 @@ General options
   --tuned_setting: used in naming the tar file, default for RHEL is the current active tuned.  For non
     RHEL systems, default is none.
   --usage: this usage message.
+```
 
 Note: The script does not install pbench for you.  You need to do that manually.
