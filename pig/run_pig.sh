@@ -47,7 +47,7 @@ usage()
 #
 # Clone the repo that contains the common code and tools
 #
-tools_git=https://github.com/dvalinrh/test_tools
+tools_git=https://github.com/redhat-performance/test_tools-wrappers
 
 found=0
 show_usage=0
