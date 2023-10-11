@@ -3,4 +3,5 @@ memory_eater
 memload
 memuse
 pig
+!pig/*
 a.out

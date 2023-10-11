@@ -65,7 +65,12 @@ obtain_system_information()
 	cat /proc/cmdline >> results_pig_${tuned_setting}/pig_config_info$suffix
 	echo using pig options -v -p 1 $pig_opt >> results_pig_${tuned_setting}/pig_config_info$suffix
 	lscpu >> results_pig_${tuned_setting}/pig_config_info$suffix
-	grep . /proc/sys/kernel/*numa* >> results_pig_${tuned_setting}/pig_config_info$suffix
+	
+	grep . /proc/sys/kernel/*numa* >> results_pig_${tuned_setting}/pig_config_info$suffix 2> /dev/null
+	if [ $? -ne 0 ]; then
+		echo "NUMA not available" >> results_pig_${tuned_setting}/pig_config_info$suffix
+	fi
+
 	grep -r . /proc/sys/kernel/*sched* >> results_pig_${tuned_setting}/pig_config_info$suffix
 	grep -r . /sys/kernel/mm/transparent_hugepage/* >> results_pig_${tuned_setting}/pig_config_info$suffix
 }
