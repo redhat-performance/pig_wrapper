@@ -232,11 +232,11 @@ else
 	os="`test_tools/detect_os`"
 	packages="gcc"
 	case "$os" in
-		"Amazon Linux" | "RHEL")
-			packages="$packages,numactl-devel,numactl-libs"
-		;;
-		"Ubuntu")
+		"ubuntu")
 			packages="$packages,libnuma-dev"
+		;;
+		*) # RHEL based systems
+			packages="$packages,numactl-devel,numactl-libs"
 		;;
 	esac
 	test_tools/package_tool --packages $packages --no_packages $to_no_pkg_install
