@@ -229,7 +229,7 @@ else
 	#
 	# Ensure required packages are installed for compilation/linking
 	#
-	os="`$TOOLS_BIN/detect_os`"
+	os="`test_tools/detect_os`"
 	packages="gcc"
 	case "$os" in
 		"Amazon Linux" | "RHEL")
@@ -239,7 +239,7 @@ else
 			packages="$packages,libnuma-dev"
 		;;
 	esac
-	$TOOLS_BIN/package_tool --packages $packages --no_packages $to_no_pkg_install
+	test_tools/package_tool --packages $packages --no_packages $to_no_pkg_install
 
 
 	#
