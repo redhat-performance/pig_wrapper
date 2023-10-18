@@ -227,15 +227,20 @@ if [ $to_pbench -eq 1 ]; then
 	$TOOLS_BIN/execute_via_pbench --cmd_executing "$0" ${arguments} --test ${test_name} --spacing 11 --pbench_stats $to_pstats
 else
 	#
-	# For system running amzn, make sure the numa packages are installed.
+	# Ensure required packages are installed for compilation/linking
 	#
+	os="`test_tools/detect_os`"
+	packages="gcc"
+	case "$os" in
+		"ubuntu")
+			packages="$packages,libnuma-dev"
+		;;
+		*) # RHEL based systems
+			packages="$packages,numactl-devel,numactl-libs"
+		;;
+	esac
+	test_tools/package_tool --packages $packages --no_packages $to_no_pkg_install
 
-	kern_string=`uname -a`
-	if [[ $kern_string == *"amzn2"* ]]; then
-		yum -y install gcc
-		yum -y install numactl-devel
-		yum -y install numactl-libs
-	fi
 
 	#
 	# Check to see if we have a parameters file to use.
