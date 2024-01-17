@@ -195,6 +195,12 @@ produce_results_info()
 	printf "%11s %11s\n" $thread_cnt $value >> results.txt
 	thread_cnt=$threads
 	thread_total=$threads
+	lines=`wc -l results_${test_name}.csv | cut -d' ' -f 1`
+	if [ $lines -gt 2 ]; then
+		echo Ran > test_results_report
+	else
+		echo Failed > test_results_report
+	fi
 }
 #
 # Run the pig test itself.
